@@ -105,7 +105,7 @@ public:
 	GetFaktura(const net::Buffer &data);
 	GetFaktura(const Dialog &dialog);
     bool parse();
-    data::filtr::Faktura getFaktura();
+    data::filtr::Faktura filtr();
 	// ...
 }
 
@@ -113,11 +113,12 @@ public:
 void Port::getFaktura(net::Buffer data) {
 	in::GetFaktura input(data);
 	if (input.parse()) {
-		data::map::GetFaktura params = input.getParams();
-		act::GetFaktura getFaktura(params);
+		data::filtr::Faktura filtr = input.filtr();
+		act::GetFaktura getFaktura(filtr);
 		if(getFaktura.action()) {
-        	data::map::Faktura szukanaFaktura = getFaktura.faktura();
-        	out::GetFaktura output(szukanaFaktura);
+			// Odpowiedzią na wyszukiwanie zawsze jest mapa.
+        	data::map::Faktura faktury = getFaktura.faktura();
+        	out::GetFaktura output(faktury);
         	signalFaktura(output);
 		} else {
 			// Nie udało się wykonać zadania.
@@ -128,10 +129,17 @@ void Port::getFaktura(net::Buffer data) {
 		// obsługa błędnych danych wejściowych
 	}
 }
+
 // Metoda wywoływana gdy zatwierdzono okno dialogowe z żądaniem pokazania faktury
 void Dialog::getFaktura() {
 	in::GetFaktura getFaktura(this);
-
+	// jw.
+	// ...
+	data::map::Faktura faktury = getFaktura.faktura();
+	FakturaListView fakturaListView();
+	data::Faktura wybranaFaktura = fakturaListView.show();
+	FakturaView fakturaView(wybranaFaktura);
+	fakturaView.show();
 }
 ```
 
