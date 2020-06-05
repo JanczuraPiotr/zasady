@@ -209,7 +209,7 @@ public:
         try {
             faktura.id = getInt(3);
     	    faktura.odbiorca = getString(7);
-        	faktura.value = getDouble(35);
+            faktura.value = getDouble(35);
         } catch (...) {
             result = false;
         }
