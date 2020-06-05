@@ -44,7 +44,7 @@ Dostęp do akcji i danych.
 
 Jego zdaniem jest wykonać akcję zgodną z odebranym sygnałem. Port ma dostęp do klas wykonujących akcje, do klas obsługujących dane wejściowe i klas generujących dane wyjściowe.  Obsługuje sieć, porty USB konsole. Ponieważ port umieszczony jest na "granicach" aplikacji będzie do niego należało przygotowanie danych wejściowych dla akcji i utworzenie strumienia wyjściowego z danych zwróconych przez akcję. 
 
-Dostęp do wejść wyjść i akcji
+Dostęp do wejść wyjść i akcji.
 
 ### Stan
 ``namespace stt``
@@ -79,7 +79,7 @@ Proste typu danych np: ```typedef int Kwota``` tworzone w pliku przeznaczonym na
 
 Wejścia mogą otrzymywać dane w formie, która dopiero po przeanalizowaniu pozwoli określić typ danej. Prawdopodobnie będzie nim bufor lub strumień danych. Wyjścia będą otrzymywać jako parametr typ zdefiniowany w ``data``. 
 
-Zakładam ogólny typ dla danych wejściowych i wyjściowych
+Zakładam ogólny typ dla danych wejściowych i wyjściowych w warstwie transportowej (sieciowej):
 
   ```c++
   namespace net {
@@ -88,7 +88,10 @@ Zakładam ogólny typ dla danych wejściowych i wyjściowych
   }
   ```
 
+
+
 ### Wejście
+
 ``namespace in``
 
 Analiza danych wejściowych. Sprawdzenie ich poprawności pod względem bezpieczeństwa aplikacji oraz zgodnością z wykonywanym zadaniem.
@@ -102,42 +105,77 @@ Przygotowuje dane do wysłania na zewnątrz aplikacji.
 
 Elementy współpracujące w celu wykonania nazwanego zadanie posługują się tą samą nazwą. Odróżnia je namespace z którego pochodzą. Założę że w przykładzie obsługujemy akcję obsługującą żądanie podania faktury. 
 
-Główną składową cyklu obsługi jest ``act::GetFaktura``. Ona jest wyposażona we wszystkie dane i mechanizmu do wykonania zadania. Zwrócenia wyniku lub informacji o błędzie. ``act::GetFaktura`` inicjowana jest obiektem ``data::entity::GetFaktura``  . Wynikiem jest pracy jest encja lub mapa encji czyli ``data::entity::Faktura`` lub ``data::map::Faktura``.  Będzie to zależało od założeń projektowych.
+Główną składową cyklu obsługi jest ``act::GetFaktura``. Ona jest wyposażona we wszystkie dane i mechanizmu do wykonania zadania. Zwrócenia wyniku lub informacji o błędzie. ``act::GetFaktura`` inicjowana jest obiektem ``data::entity::Faktura``  . Wynikiem jest pracy jest encja lub mapa encji czyli ``data::entity::Faktura`` lub ``data::map::Faktura``.  Będzie to zależało od założeń projektowych.
 
 Jeżeli ``act::GetFaktura`` nie będzie wywoływana na brzegu aplikacji to dane ją inicjującą mogą pochodzić od innej akcji a on sama może być producentem danych dla innej akcji. Wywołanie akcji nie na brzegach aplikacji powinno być rzadkością. Można je tworzyć w celu widocznego wyodrębnienia istotnej operacji. Dobrym rozwiązaniem może być umieszczanie kodu wykonywanego w oknach dialogowych w akcjach.
 
 Wszystkie elementy wymieniają się danymi zdefiniowanymi w przestrzeni ``data``.
 
-Akcja jest wykonywana na podstawie ``data::entity::Faktura``. Gdy jest na skraju aplikacji obiekt tej zmiennej musi być utworzony z danych wejściowych. Najprawdopodobniej będzie to ``in::GetFaktura input(net::Buffer data);`` zwracająca ``data::entity::Faktura = input.data();`` Zakładając że ``act::GetFaktura`` znalazła większość ilość faktur : ``data::map::Faktura fakturay = actGetFaktura.faktury()``
+Akcja jest wykonywana na podstawie ``data::entity::Faktura``. Gdy jest na skraju aplikacji obiekt tej zmiennej musi być utworzony z danych wejściowych. Najprawdopodobniej będzie to ``in::GetFaktura input(net::Buffer data);`` zwracająca ``data::entity::Faktura = input.data();`` Zakładając że ``act::GetFaktura`` znalazła większość ilość faktur : ``data::map::Faktura faktura = actGetFaktura.faktury()``
+
+Jeżeli wynik pracy akcji przewidziany jest do przekazania kolejnej akcji umieszczamy go jako parametr konstruktora : ``act::PrintFaktura printFaktura(faktura)``. Jeżeli wynik pracy ma być przekazany poza aplikację należy przetworzyć ją do postaci obsługiwanej przez kanał transmisyjny. Zakładam że będzie to ``net::Buffer`` : `` out::GetFaktura getFaktura(faktura)``  ``getFaktura.parse()`` a następnie: ``jakaśMetodaWykonującaWysyłkę(getFaktura.buffer())``
 
 
 
-## Procedury 
+## Metodologia  
 
-Czyli jak pochodzić do obsługi żądania.
+Czyli  podejście utworzenia nowej funkcjonalności którą przykładowo jest zwrócenie faktury .
 
-
-
-
+Zakładam, że ``stt::Siec``  potrafi skompletować bufor wejściowy i wyciągnąć z niego kod komendy.
 
 ```C++
-class Siec {
+// Klasa po odebraniu kompletnego bufora sprawdzi jego poprawność i komendę z jaką
+// jest związany a następnie wyemituje sygnał o właściwej nazwie.
+class stt::Siec {
+public:
     // ...
-    void getFaktura(net::Buffer data);
+    // Sygnał jaki wyemituje klasa po rozpoznaniu komendy o kodzie GET_FAKTURA
+	void getFakturaRequest(model::entity::Faktura faktura); // <- sygnał
+    // Metoda do której przekazujemy fakturę którą chcemy wysłać klientowi.
+    void getFakturaResponse(model::rekord::Faktura faktura) {// <- slot
+        out::GetFakturaResponse output(faktura);
+        metodaWysyłającaDane(output.getBuffer());
+    }
     // ...
+private:
+   	// Klasa ma zdefiniowane metody odczytu i zapisu do sieci.
+    // Metoda która ma skompletowany bufor wejściowy wywołuje tą metodę.
+    void processCommand(net::Buffer &buffer) {
+        Command command = getCommand(buffer);
+        switch(command) {
+            //.. 
+            // Na poziomie sieci 
+            case GET_FAKTURA: {
+                in::GetFaktura input(buffer);
+                if (input.parse()) {
+                    // Wysyłamy sygnał o typie odebranego komunikatu.
+                    // W zależności od zastosowanej biblioteki utworzyć właściwą 
+                    // konstrukcję. 
+                    data::entity::Faktura faktura = input.data();
+                    sygnał: getFakturaRequest(faktura);
+                } else {
+                    // Błędne dane wejściowe
+                }
+            }
+            // ...    
+            default: {}    
+        }
+    }
 }
 
-// ...
-void Siec::getFaktura(net::Buffer data) {
-    in::GetFaktura input(data);
-    act::GetFaktura action(input.data());
-    
-}
 ```
 
+Istotne jest, że od momentu rozpoznania komunikatu w warstwie sieciowej posługujemy się danymi zdefiniowanymi jako encje, wraz z przypisanymi do nich rekordami mapami rekordów i repozytoriów. 
 
 
 
+
+
+
+
+
+
+NOTATKI
 
 
 ## Przypadki użycia.
