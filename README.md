@@ -83,8 +83,8 @@ Zakładam ogólny typ dla danych wejściowych i wyjściowych w warstwie transpor
 
   ```c++
   namespace net {
-	typedef unsigned char Variable; 
-  	typedef std::vector<Variable> Buffers; 
+      typedef unsigned char Variable; 
+      typedef std::vector<Variable> Buffers; 
   }
   ```
 
@@ -117,27 +117,31 @@ Jeżeli wynik pracy akcji przewidziany jest do przekazania kolejnej akcji umiesz
 
 
 
-## Metodologia  
+## Więcej szczegółów  
 
 Czyli  podejście utworzenia nowej funkcjonalności którą przykładowo jest zwrócenie faktury .
+
+### Komunikacja
 
 Zakładam, że ``stt::Siec``  potrafi skompletować bufor wejściowy i wyciągnąć z niego kod komendy.
 
 ```C++
+// Główne składowe klasy.
 // Klasa po odebraniu kompletnego bufora sprawdzi jego poprawność i komendę z jaką
 // jest związany a następnie wyemituje sygnał o właściwej nazwie.
 class stt::Siec {
 public:
     // ...
-    // Sygnał jaki wyemituje klasa po rozpoznaniu komendy o kodzie GET_FAKTURA
+    // Sygnał jaki wyemituje ta klasa po rozpoznaniu komendy o kodzie GET_FAKTURA
 	void getFakturaRequest(model::entity::Faktura faktura); // <- sygnał
     // Metoda do której przekazujemy fakturę którą chcemy wysłać klientowi.
     void getFakturaResponse(model::rekord::Faktura faktura) {// <- slot
-        out::GetFakturaResponse output(faktura);
-        metodaWysyłającaDane(output.getBuffer());
+		out::GetFakturaResponse output(faktura);
+		metodaWysyłającaDane(output.getBuffer());
     }
     // ...
 private:
+    // Założenia
    	// Klasa ma zdefiniowane metody odczytu i zapisu do sieci.
     // Metoda która ma skompletowany bufor wejściowy wywołuje tą metodę.
     void processCommand(net::Buffer &buffer) {
@@ -167,11 +171,72 @@ private:
 
 Istotne jest, że od momentu rozpoznania komunikatu w warstwie sieciowej posługujemy się danymi zdefiniowanymi jako encje, wraz z przypisanymi do nich rekordami mapami rekordów i repozytoriów. 
 
+### Klasy obsługującej wejścia.
+
+W klasie bazowej umieścić wszystkie metody pozwalające analizować bufor
+
+```c++
+// Klasa posiadająca wszystkie mechanizmy pozwalającej jej sparsować bufor
+// wejściowy sformatowany zgodnie z protokołem.
+class in::Input {
+public:
+	virtual bool parse() = 0;
+    
+protected: // metody
+	// Poglądowo, metody których istnienia w takiej klasie można się spodziewać 
+    int getInt(std::size_t pos); 
+    double getDouble(std::size_t pos);
+    std::string getString(std::size_t pos);
+    std::vector<T> getVector<T>(std::size_t pos);
+    
+protected: // atrybuty
+    std::size_t cursor; // aktualne położenie znaku czytania kolejnej zmiennej
+    const net::Buffer buffer; // dane wejściowe,
+}
+```
+
+Mając klasę bazową parsującą wejście dziedziczymy po niej specjalizowaną klasę obsługującą konkretny komunikat:
+
+```c++
+class in::GetFaktura : public in::Input {
+public:
+    
+ 	bool parse() override {
+        bool result = true;
+        // W rzeczywistym kodzie, gdzieś po drodze jest prowadzona kontrola poprawności 
+        // by ustawić result na false w razie niepowodzenia. 
+        // Może to być prze wyjątek rzucony w dowolnym momencie 
+        try {
+	        faktura.id = getInt(3);
+    	    faktura.odbiorca = getString(7);
+        	faktura.value = getDouble(35);
+        } catch (...) {
+            result = false;
+        }
+        
+        return result;
+    }   
+    
+    data::entity::Faktura getFaktura() {
+        return faktura;
+    }
+   
+private : //metody
+    
+private: // atrybuty
+	data::entity::Faktura faktura;    
+}
+```
+
+c
 
 
 
 
 
+
+
+----------------------------------------------
 
 
 
