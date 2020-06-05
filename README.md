@@ -20,19 +20,21 @@ Kod dzielony jest na  **akcje**, **porty**, **zdarzenia**, **stany**, **algorytm
 
 **Stan**, obiekt przechowujący informacje dostępny dla wszystkich innych obiektów aplikacji. 
 
+**Porty** i **zdarzenia** Są metodami w klasach kontrolerach. Klasa kontroler obsługuje tylko sygnały o odebranych danych. 
+
 ### Akcja
 
 ``namespace act``
 
-Obiekt uruchamiany na potrzeby konkretnego zadnia. Ma dostęp do algorytmów, stanów, danych i repo. Raczej zawsze będzie tworzony przez port lub podczas obsługi zdarzenia. Akcje opisują funkcjonalność aplikacji z perspektywy klienta, operatora. Wszystko co można wykonać na aplikacji jako jej klient musi być opisane klasą umieszczoną na liście akcji. Lista akcji dla czytelnika jest podstawowym dokumentem o możliwościach aplikacji (jest definicją aplikacji).
+Obiekt uruchamiany na potrzeby konkretnego zadnia. Raczej zawsze będzie tworzony przez port lub podczas obsługi zdarzenia. Akcje opisują funkcjonalność aplikacji z perspektywy klienta, operatora. Wszystko co można wykonać na aplikacji jako jej klient musi być opisane klasą umieszczoną na liście akcji. Lista akcji dla czytelnika jest podstawowym dokumentem o możliwościach aplikacji (jest definicją aplikacji).
 
-Dostęp do stanów, danych i algorytmów.
+Dostęp do stanów, danych i algorytmów i repo.
 
 ### Zdarzenie
 
 ``namespace ev``
 
-Obsługuje sygnały od interfejsów graficznych (menu, przyciski, pól edycyjnych, itp) oraz wejść, klawiatura.
+Obsługuje sygnały od interfejsów graficznych (menu, przyciski, pól edycyjnych, itp) oraz wejść, klawiatura. Sygnał - zdarzenia wewnątrz interfejsów graficznych nie są wyszczególniane.
 
 Dostęp do akcji i danych.
 
@@ -49,7 +51,7 @@ Dostęp do wejść wyjść i akcji
 
 Singleton lub inaczej utworzona klasa trwająca przez cały czas życia aplikacji. Na podstawie własnych mechanizmów i wywołujących je akcji modyfikują przechowywane przez siebie zmienne. Prawdopodobnie będzie posiadał uruchomiony wątek.
 
-Dostęp do danych.
+Dostęp do danych i algorytmów.
 
 ### Algorytm
 ``namespace alg``
@@ -65,16 +67,26 @@ Złożone typy danych wykorzystywane przez porty, zdarzenia, akcje i algorytmy.
 Przechowuje w bazie danych pozwala wyszukiwać i modyfikować.
 Proste typu danych np: ```typedef int Kwota``` tworzone w pliku przeznaczonym na definicje, w ciele innych klas a w razie konieczności umieszczane w domenowej przestrzeni nazw.
 
-``namespace data::entity`` encja 
+~~``namespace data::params``  Definiujące listę pól dla wyszukiwania.~~
 
-``namespace data::filtr`` Klasy definiujące listę pól dla wyszukiwania.
+``namespace data::entity`` Encja. Może istnieć w nie kompletnej formie i stanowić podstawę do filtrowania.
 
-``namespace data::record`` encja przechowywana na dysku, wyposażona w identyfikator
+``namespace data::record`` Encja przechowywana na dysku, wyposażona w identyfikator
 
-``namespace data::map`` Zestawienia
+``namespace data::map`` Zestawienia. Produkt zwracany  z repo
 
-``namespace data::repo`` przechowywanie na dysku
+``namespace data::repo`` Przechowywanie rekordy zapisane na podstawie encji po uprzednim walidowaniu. 
 
+Wejścia mogą otrzymywać dane w formie, która dopiero po przeanalizowaniu pozwoli określić typ danej. Prawdopodobnie będzie nim bufor lub strumień danych. Wyjścia będą otrzymywać jako parametr typ zdefiniowany w ``data``. 
+
+Zakładam ogólny typ dla danych wejściowych i wyjściowych
+
+  ```c++
+  namespace net {
+	typedef unsigned char Variable; 
+  	typedef std::vector<Variable> Buffers; 
+  }
+  ```
 
 ### Wejście
 ``namespace in``
@@ -86,9 +98,51 @@ Analiza danych wejściowych. Sprawdzenie ich poprawności pod względem bezpiecz
 
 Przygotowuje dane do wysłania na zewnątrz aplikacji.
 
+### Zależności między elementami.
+
+Elementy współpracujące w celu wykonania nazwanego zadanie posługują się tą samą nazwą. Odróżnia je namespace z którego pochodzą. Założę że w przykładzie obsługujemy akcję obsługującą żądanie podania faktury. 
+
+Główną składową cyklu obsługi jest ``act::GetFaktura``. Ona jest wyposażona we wszystkie dane i mechanizmu do wykonania zadania. Zwrócenia wyniku lub informacji o błędzie. ``act::GetFaktura`` inicjowana jest obiektem ``data::entity::GetFaktura``  . Wynikiem jest pracy jest encja lub mapa encji czyli ``data::entity::Faktura`` lub ``data::map::Faktura``.  Będzie to zależało od założeń projektowych.
+
+Jeżeli ``act::GetFaktura`` nie będzie wywoływana na brzegu aplikacji to dane ją inicjującą mogą pochodzić od innej akcji a on sama może być producentem danych dla innej akcji. Wywołanie akcji nie na brzegach aplikacji powinno być rzadkością. Można je tworzyć w celu widocznego wyodrębnienia istotnej operacji. Dobrym rozwiązaniem może być umieszczanie kodu wykonywanego w oknach dialogowych w akcjach.
+
+Wszystkie elementy wymieniają się danymi zdefiniowanymi w przestrzeni ``data``.
+
+Akcja jest wykonywana na podstawie ``data::entity::Faktura``. Gdy jest na skraju aplikacji obiekt tej zmiennej musi być utworzony z danych wejściowych. Najprawdopodobniej będzie to ``in::GetFaktura input(net::Buffer data);`` zwracająca ``data::entity::Faktura = input.data();`` Zakładając że ``act::GetFaktura`` znalazła większość ilość faktur : ``data::map::Faktura fakturay = actGetFaktura.faktury()``
 
 
-## Przypadki użycia. 
+
+## Procedury 
+
+Czyli jak pochodzić do obsługi żądania.
+
+
+
+
+
+```C++
+class Siec {
+    // ...
+    void getFaktura(net::Buffer data);
+    // ...
+}
+
+// ...
+void Siec::getFaktura(net::Buffer data) {
+    in::GetFaktura input(data);
+    act::GetFaktura action(input.data());
+    
+}
+```
+
+
+
+
+
+
+## Przypadki użycia.
+
+
 
 ```c++
 
@@ -145,6 +199,6 @@ void Dialog::getFaktura() {
 
 
 
-## Procedury 
-
 ### Obsługa żądań zewnętrznych
+
+Akcje w oknach dialogowych
