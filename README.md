@@ -134,15 +134,15 @@ public:
     // ...
     // Sygnał jaki wyemituje ta klasa po rozpoznaniu komendy o kodzie GET_FAKTURA
 	void getFakturaRequest(model::entity::Faktura faktura); // <- sygnał
-    // Metoda do której przekazujemy fakturę którą chcemy wysłać klientowi.
-    void getFakturaResponse(model::rekord::Faktura faktura) {// <- slot
-		out::GetFakturaResponse output(faktura);
-		metodaWysyłającaDane(output.getBuffer());
-    }
-    // ...
+   	// Metoda do której przekazujemy fakturę którą chcemy wysłać klientowi.
+  	void getFakturaResponse(model::rekord::Faktura faktura) {// <- slot
+        out::GetFakturaResponse output(faktura);
+        metodaWysyłającaDane(output.getBuffer());
+   	}
+   	// ...
 private:
     // Założenia
-   	// Klasa ma zdefiniowane metody odczytu i zapisu do sieci.
+  	// Klasa ma zdefiniowane metody odczytu i zapisu do sieci.
     // Metoda która ma skompletowany bufor wejściowy wywołuje tą metodę.
     void processCommand(net::Buffer &buffer) {
         Command command = getCommand(buffer);
@@ -180,7 +180,7 @@ W klasie bazowej umieścić wszystkie metody pozwalające analizować bufor
 // wejściowy sformatowany zgodnie z protokołem.
 class in::Input {
 public:
-	virtual bool parse() = 0;
+    virtual bool parse() = 0;
     
 protected: // metody
 	// Poglądowo, metody których istnienia w takiej klasie można się spodziewać 
@@ -207,7 +207,7 @@ public:
         // by ustawić result na false w razie niepowodzenia. 
         // Może to być prze wyjątek rzucony w dowolnym momencie 
         try {
-	        faktura.id = getInt(3);
+            faktura.id = getInt(3);
     	    faktura.odbiorca = getString(7);
         	faktura.value = getDouble(35);
         } catch (...) {
