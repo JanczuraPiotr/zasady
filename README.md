@@ -183,7 +183,7 @@ public:
     virtual bool parse() = 0;
     
 protected: // metody
-	// Poglądowo, metody których istnienia w takiej klasie można się spodziewać 
+    // Poglądowo, metody których istnienia w takiej klasie można się spodziewać 
     int getInt(std::size_t pos); 
     double getDouble(std::size_t pos);
     std::string getString(std::size_t pos);
@@ -199,9 +199,9 @@ Mając klasę bazową parsującą wejście dziedziczymy po niej specjalizowaną 
 
 ```c++
 class in::GetFaktura : public in::Input {
-public:
-    
- 	bool parse() override {
+public:	
+	
+    bool parse() override {
         bool result = true;
         // W rzeczywistym kodzie, gdzieś po drodze jest prowadzona kontrola poprawności 
         // by ustawić result na false w razie niepowodzenia. 
