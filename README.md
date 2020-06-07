@@ -49,7 +49,7 @@ Dostęp do wejść wyjść i akcji.
 ### Stan
 ``namespace stt`` 
 
-Klasa trwająca przez cały czas życia aplikacji. Na podstawie własnych mechanizmów i wywołujących je akcji modyfikują przechowywane przez siebie zmienne. Prawdopodobnie będzie posiadał uruchomiony wątek. Prawdopodobnie zmiany w obrębie atrybutów będą opisane algorytmem i będzie modyfikował repozytoria.
+Klasa trwająca przez cały czas życia aplikacji. Na podstawie własnych mechanizmów i wywołującyPrzypadki użycia.ch je akcji modyfikują przechowywane przez siebie zmienne. Prawdopodobnie będzie posiadał uruchomiony wątek. Prawdopodobnie zmiany w obrębie atrybutów będą opisane algorytmem i będzie modyfikował repozytoria.
 
 Dostęp do danych i algorytmów.
 
@@ -141,7 +141,7 @@ public:
        // ...
 private:
     // Założenia
-      // Klasa ma zdefiniowane metody odczytu i zapisu do sieci.
+    // Klasa ma zdefiniowane metody odczytu i zapisu do sieci.
     // Metoda tej klasy która ma skompletowany bufor wejściowy wywołuje tą metodę.
     void processCommand(net::Buffer &buffer) {
         Command command = getCommand(buffer);
