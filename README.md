@@ -49,7 +49,7 @@ Dostęp do wejść wyjść i akcji.
 ### Stan
 ``namespace stt`` 
 
-Klasa trwająca przez cały czas życia aplikacji. Na podstawie własnych mechanizmów i wywołującyPrzypadki użycia.ch je akcji modyfikują przechowywane przez siebie zmienne. Prawdopodobnie będzie posiadał uruchomiony wątek. Prawdopodobnie zmiany w obrębie atrybutów będą opisane algorytmem i będzie modyfikował repozytoria.
+Klasa trwająca przez cały czas życia aplikacji. Na podstawie własnych mechanizmów i wywołujących je akcji modyfikują przechowywane przez siebie zmienne. Prawdopodobnie będzie posiadał uruchomiony wątek. Prawdopodobnie zmiany w obrębie atrybutów będą opisane algorytmem i będzie modyfikował repozytoria. 
 
 Dostęp do danych i algorytmów.
 
@@ -180,7 +180,7 @@ W klasie bazowej należy umieścić wszystkie metody pozwalające analizować bu
 class in::Input {
 public:
     Input(net::Buffer buffer) 
-        : cursor(0), buffer() {};
+        : cursor(0), buffer(buffer) {};
     
     virtual bool parse() = 0;
     
@@ -191,10 +191,11 @@ protected: // metody
     std::string getString();
     
 protected: // atrybuty
-    std::size_t cursor; // Aktualne położenie znaku czytania kolejnej zmiennej. Każda 							
-                        // metoda getXxx() ustawia rozpoczyna odczyt z pozycji na którą
-                        // wskazuje cursor. Po zakończeniu odczytu metoda ustawia kursor
-                        // na następną pozycję po miejscu na którym zakończyła odczyt.
+    std::size_t cursor; // Aktualne położenie znaku czytania kolejnej zmiennej. 
+                        // Każda metoda getXxx() ustawia rozpoczyna odczyt z 
+                        // pozycji na którą wskazuje cursor. Po zakończeniu 
+                        // odczytu metoda ustawia kursor na następną pozycję po 
+                        // miejscu na którym zakończyła odczyt.
     const net::Buffer buffer; // dane wejściowe,
 }
 ```
@@ -204,16 +205,18 @@ Mając klasę bazową parsującą wejście dziedziczymy po niej specjalizowaną 
 ```c++
 class in::GetFaktura : public in::Input {
 public:	
-    GetFaktura(net::Buffer buffer);
+    GetFaktura(net::Buffer buffer)
+        : Input(buffer);
+    
     bool parse() override {
         bool result = true;
-        // W rzeczywistym kodzie, gdzieś po drodze jest prowadzona kontrola poprawności 
-        // by ustawić result na false w razie niepowodzenia. 
+        // W rzeczywistym kodzie, gdzieś po drodze jest prowadzona kontrola			
+        // poprawności by ustawić result na false w razie niepowodzenia. 
         // Może to być prze wyjątek rzucony w dowolnym momencie.
         try {
-            faktura.setId(getInt(3));
-            faktura.setOdbiorca(getString(7));
-            faktura.setValue(getDouble(35));
+            faktura.setId(getInt());
+            faktura.setOdbiorca(getString());
+            faktura.setValue(getDouble());
         } catch (...) {
             result = false;
         }
@@ -240,8 +243,10 @@ W klasie bazowej należy umieścić wszystkie metody pozwalające złożyć bufo
 class out::Output {
 public:
     Output() : cursor(0) , buffer() {};
+    
     virtual bool serialize() = 0;
-     net::Buffer getBuffer() {
+    
+    net::Buffer getBuffer() {
         return buffer;
     }
     
@@ -279,76 +284,3 @@ private:
 } 
 ```
 
-
-
-
-
-----------------------------------------------
-
-
-
-NOTATKI
-
-
-## Kontroler , port
-
-
-
-```c++
-
-typedef unsigned char net::Variable;
-typedef std::vector<net::Variable> net::Buffer;
-
-// Klasa reprezentująca zapytanie o pobranie danych
-class data::filtr::Faktura {
-    
-}
-
-class in::GetFaktura {
-public:
-    GetFaktura(const net::Buffer &data);
-    GetFaktura(const Dialog &dialog);
-    bool parse();
-    data::filtr::Faktura filtr();
-    // ...
-}
-
-// Metoda wywołana gdy rozpoznano żądanie przesłania faktury. 
-void Port::getFaktura(net::Buffer data) {
-    in::GetFaktura input(data);
-    if (input.parse()) {
-        data::filtr::Faktura filtr = input.filtr();
-        act::GetFaktura getFaktura(filtr);
-        if(getFaktura.action()) {
-            // Odpowiedzią na wyszukiwanie zawsze jest mapa.
-            data::map::Faktura faktury = getFaktura.faktura();
-            out::GetFaktura output(faktury);
-            signalFaktura(output);
-        } else {
-            // Nie udało się wykonać zadania.
-            // Od kontekstu będzie zależało czy nie powodzeniem jest nie znalezienie 
-            // faktury czy problem z wykonaniem czynności 
-        }
-    } else {
-        // obsługa błędnych danych wejściowych
-    }
-}
-
-// Metoda wywoływana gdy zatwierdzono okno dialogowe z żądaniem pokazania faktury
-void Dialog::getFaktura() {
-    in::GetFaktura getFaktura(this);
-    // jw.
-    // ...
-    data::map::Faktura faktury = getFaktura.faktura();
-    FakturaListView fakturaListView();
-    data::Faktura wybranaFaktura = fakturaListView.show();
-    FakturaView fakturaView(wybranaFaktura);
-    fakturaView.show();
-}
-```
-
-
-
-### Obsługa żądań zewnętrznych
-
-Akcje w oknach dialogowych
