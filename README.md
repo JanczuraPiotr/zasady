@@ -24,7 +24,7 @@ Kod dzielony jest na  **akcje**, **kontrolery**, **stany**, **algorytmy**, **dan
 
 ``namespace act``
 
-Obiekt uruchamiany na potrzeby konkretnego zadnia. Raczej zawsze będzie tworzony przez port lub podczas obsługi zdarzenia. Akcje opisują funkcjonalność aplikacji z perspektywy klienta, operatora. Wszystko co można wykonać na aplikacji jako jej klient musi być opisane klasą umieszczoną na liście akcji. Lista akcji dla czytelnika jest podstawowym dokumentem o możliwościach aplikacji (jest definicją aplikacji).
+Obiekt uruchamiany na potrzeby konkretnego zadnia. Raczej zawsze będzie tworzony przez metodę kontrolera. Akcje opisują funkcjonalność aplikacji z perspektywy klienta. Wszystko co można wykonać na aplikacji jako jej klient musi być opisane klasą umieszczoną na liście akcji. Lista akcji dla czytelnika jest podstawowym dokumentem o możliwościach aplikacji (jest definicją aplikacji).
 
 Dostęp do stanów, danych i algorytmów i repo.
 
@@ -77,8 +77,6 @@ Zakładam ogólny typ dla danych wejściowych i wyjściowych w warstwie transpor
       typedef std::vector<Variable> Buffers; 
   }
   ```
-
-
 
 ### Wejście
 
@@ -271,7 +269,7 @@ public:
     
 private:
     const data::entity::Faktura faktura;
-} 
+}
 ```
 
 ### Akcja
@@ -297,7 +295,6 @@ public:
         : filtr(filtr), faktura(nullptr), repoFaktury(repoFaktury){}
 
     bool action() override {
-        // !!! pseudokod
         faktura = repoFaktury.find(filtr);
         if (faktura != nullptr) {
             return true;
@@ -314,7 +311,7 @@ public:
         return faktura.entity();
     }
 
-private:
+private: // atrybuty
     const data::entity::Faktura filtr;
     data::record::Faktury faktura;
     data::repo::Faktury repoFaktury;
