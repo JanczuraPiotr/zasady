@@ -4,7 +4,7 @@
 
 * Domena aplikacji - główne zagadnienie do obsługi którego utworzono aplikację    
 * Encja - zestaw atrybutów wspólnie opisujących złożony obiekt. Atrybuty są typów prostych.
-* Rekord - Encja zapisana na dysku rozszerzona o unikalny identyfikator.  
+* Rekord - Encja zapisana na dysku rozszerzona o unikalny identyfikator czasami o daty utworzenia i ostatniej modyfikacji rekordu.  
 
 ## Architektura
 
@@ -12,15 +12,13 @@
 
 Architektura aplikacji rzutowana jest na strukturę katalogów przechowujących jej źródła i przestrzenie nazw.
 
-Kod dzielony jest na  **akcje**, **porty**, **zdarzenia**, **stany**, **algorytmy**, **dane**, **repozytoria**.
+Kod dzielony jest na  **akcje**, **kontrolery**, **stany**, **algorytmy**, **dane**, **repozytoria**.
 
-**Akcje** wykonują główne zadania aplikacji. **Akcja** pozostawia po sobie ślad w postaci zmiany **stanu** aplikacji i/lub zapisu **danych** w **repozytorium**. **Porty** obsługują operacje wejścia wyjścia za pomocą **akcji**.  Analizę danych wejściowych wykonują **wejścia**. Przygotowanie danych wyjściowych wykonują **wyjścia**. **Zdarzenia** głównie czynności wykonywane przez operatora na interfejsie ale też przez np upływ czasu.
+**Akcje** wykonują główne zadania aplikacji. **Akcja** pozostawia po sobie ślad w postaci zmiany **stanu** aplikacji i/lub zapisu **danych** w **repozytorium**. **Kontrolery** obsługują operacje wejścia wyjścia za pomocą **akcji**.  Analizę danych wejściowych wykonują **wejścia**. Przygotowanie danych wyjściowych wykonują **wyjścia**. **Zdarzenia** głównie czynności wykonywane przez operatora na interfejsie ale też przez np upływ czasu.
 
-**Wejścia**, **wyjścia**, **zdarzenia**, **akcje**, **stany** wymieniają się **danymi**. Wszystkie **dane** nawet o najprostszej strukturze zdefiniowane są jako osobna klasa. 
+**Wejścia**, **wyjścia**, **kontrolery**, **stany** wymieniają się **danymi**. Wszystkie **dane** nawet o najprostszej strukturze zdefiniowane są jako osobna klasa. 
 
 **Stan**, obiekt przechowujący informacje dostępny dla wszystkich innych obiektów aplikacji. 
-
-**Porty** i **zdarzenia** Są metodami w klasach kontrolerach. Klasa kontroler obsługuje tylko sygnały o odebranych danych. 
 
 ### Akcja
 
@@ -30,28 +28,20 @@ Obiekt uruchamiany na potrzeby konkretnego zadnia. Raczej zawsze będzie tworzon
 
 Dostęp do stanów, danych i algorytmów i repo.
 
-### Zdarzenie
+### Kontroler
 
-``namespace ev``
+``namespace ctrl``
 
-Obsługuje sygnały od interfejsów graficznych (menu, przyciski, pól edycyjnych, itp) oraz wejść, klawiatura. Sygnał - zdarzenia wewnątrz interfejsów graficznych nie są wyszczególniane.
+Obsługuje sygnały od interfejsów graficznych z klawiatury i od obiektów przechowujących stan o swoich zmianach , oraz wejść. Sygnały - zdarzenia wewnątrz interfejsów graficznych nie są wyszczególniane. Obsługa polega na wywołaniu właściwej akcji i w zależności od jej wyniku przekazaniu danych do wyjścia lub wywołaniu kolejnej akcji.
 
-Dostęp do akcji i danych.
-
-### Port
-
-``namespace prt``
-
-Jego zdaniem jest wykonać akcję zgodną z odebranym sygnałem. Port ma dostęp do klas wykonujących akcje, do klas obsługujących dane wejściowe i klas generujących dane wyjściowe.  Obsługuje sieć, porty USB konsole. Ponieważ port umieszczony jest na "granicach" aplikacji będzie do niego należało przygotowanie danych wejściowych dla akcji i utworzenie strumienia wyjściowego z danych zwróconych przez akcję. 
-
-Dostęp do wejść wyjść i akcji.
+Dostęp do akcji, wejść, wyjść i danych. 
 
 ### Stan
 ``namespace stt`` 
 
-Klasa trwająca przez cały czas życia aplikacji. Na podstawie własnych mechanizmów i wywołujących je akcji modyfikują przechowywane przez siebie zmienne. Prawdopodobnie będzie posiadał uruchomiony wątek. Prawdopodobnie zmiany w obrębie atrybutów będą opisane algorytmem i będzie modyfikował repozytoria. 
+Obiekt trwający przez cały czas życia aplikacji. Na podstawie własnych mechanizmów i wywołujących je akcji modyfikują przechowywane przez siebie zmienne. Prawdopodobnie będzie posiadał uruchomiony wątek. Prawdopodobnie zmiany w obrębie atrybutów będą opisane algorytmem i będzie modyfikował repozytoria. Obiekty klas tej przestrzeni generują sygnały o zmianie stanu. 
 
-Dostęp do danych i algorytmów.
+Dostęp do danych i algorytmów. Stany jako jedyne mają dostęp do interfejsów sprzętowych, portów sieciowych, USB.  
 
 ### Algorytm
 ``namespace alg``
@@ -133,8 +123,8 @@ public:
     // ...
     // Sygnał jaki wyemituje ta klasa po rozpoznaniu komendy o kodzie GET_FAKTURA
     void getFakturaRequest(model::entity::Faktura faktura); // <- sygnał
-       // Metoda do której przekazujemy fakturę którą chcemy wysłać klientowi.
-      void getFakturaResponse(model::entity::Faktura faktura) {// <- slot
+    // Metoda do której przekazujemy fakturę którą chcemy wysłać klientowi.
+    void getFakturaResponse(model::entity::Faktura faktura) {// <- slot
         out::GetFakturaResponse output(faktura);
         metodaWysyłającaDane(output.getBuffer());
        }
@@ -283,4 +273,86 @@ private:
     const data::entity::Faktura faktura;
 } 
 ```
+
+### Akcja
+
+Akcja zależy od skomplikowania zadania które ma wykonać więc trudno narzucać (proponować) formę. Najważniejsze : w konstruktorze umieszczamy wszystkie zależności dla wykonania akcji.  Metoda Action::action() wykonuje wszystkie operacje i zwraca bool informujący o powodzeniu. Musi istnieć metoda zwracająca odpowiedź w postaci obiektu klasy z namespace data::.
+
+```C++
+namespace act {
+// W założeniu klasy akcje udostępniają jedną metodę.
+class Action {
+public:
+    virtual bool action() = 0;     
+}
+
+}
+```
+```C++
+namespace act {
+
+class GetFaktura : public Action {
+public:
+    GetFaktura(data::entity::Faktura filtr, data::repo::Faktura repoFaktury)
+        : filtr(filtr), faktura(nullptr), repoFaktury(repoFaktury){}
+
+    bool action() override {
+        // !!! pseudokod
+        faktura = repoFaktury.find(filtr);
+        if (faktura != nullptr) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    data::record::Faktura getFakturaRecord() {
+        return faktura; 
+    }
+
+    data::entity::Faktura getFakturaEntity() {
+        return faktura.entity();
+    }
+
+private:
+    const data::entity::Faktura filtr;
+    data::record::Faktury faktura;
+    data::repo::Faktury repoFaktury;
+}
+
+}
+```
+
+### Kontroler.
+
+Wyżej zdefiniowane elementy wykonywane są na poziomie sieci. Klasa odbierająca i wysyłająca dane komunikuje się z klasami kontrolerów sygnalizując im odebrane komendy.  Sposoby takiej komunikacji będą zależały od wykorzystanego rozwiązania.  W przykładzie wyżej zasugerowane jest, że w jakiś sposób zostanie wysłany sygnał. Więc zostając w tej konwencji bez wskazywania gdzie wystąpi miejsce zestawienia takiego połączenia należy przyjąć że metody kontrolera zostały połączone do sygnału z stt::Siec.
+
+```c++
+class ctrl::Ksiegowosc {
+public:
+    // ...
+    
+    // Żądanie zwrócenia informacji o fakturze o której część informacji
+    // zawarta jest w encji faktura. 
+    // Dla uproszczenia przyjęto, że w repozytorium nie ma możliwości znalezienia 
+    // większej ilości faktur pasujących do wzorca podanego w parametrze filtr
+    void getFaktura(data::entity::Faktura filtr) {
+        data::repo::Faktura repoFaktura;
+        act::GetFaktura getFaktura(filtr, repoFaktura);
+        if(getFaktura.action()) {
+            // Odpowiedzią na wyszukiwanie zawsze jest mapa.
+            data::entity::Faktura faktura = getFaktura.getFakturaEntity();
+            sygnał : getFakturaResponse(faktura)
+        } else {
+            // Nie udało się wykonać zadania.
+            // Od kontekstu będzie zależało czy nie powodzeniem jest nie znalezienie 
+            // faktury czy problem z wykonaniem czynności 
+            sygnał : brakFaktury(filtr);
+        }		
+    }   
+    // ...
+}
+```
+
+
 
