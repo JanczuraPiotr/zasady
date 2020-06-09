@@ -121,7 +121,7 @@ Czyli podejście utworzenia nowej funkcjonalności, którą jest zwrócenie fakt
 Zakładam, że ``stt::Siec``  potrafi skompletować bufor wejściowy i wyciągnąć z niego kod komendy.
 
 ```C++
-// Przedstawione są główne najistotniejszse składowe klasy.
+// Przedstawione są główne najistotniejsze składowe klasy.
 // Klasa po odebraniu kompletnego bufora sprawdzi jego poprawność i komendę z jaką
 // jest związany a następnie wyemituje sygnał o właściwej nazwie.
 class stt::Siec {
@@ -133,17 +133,16 @@ public:
     void getFakturaResponse(model::entity::Faktura faktura) {// <- slot
         out::GetFakturaResponse output(faktura);
         metodaWysyłającaDane(output.getBuffer());
-       }
-       // ...
+    }
+    // ...
 private:
     // Założenia
     // Klasa ma zdefiniowane metody odczytu i zapisu do sieci.
-    // Metoda tej klasy która ma skompletowany bufor wejściowy wywołuje tą metodę.
+    // Metoda która odczytała bufor wywołuje metodę definiowaną w tym miejscu.
     void processCommand(net::Buffer &buffer) {
         Command command = getCommand(buffer);
         switch(command) {
             //.. 
-            // Na poziomie sieci 
             case GET_FAKTURA: {
                 in::GetFaktura input(buffer);
                 if (input.parse()) {
@@ -163,13 +162,14 @@ private:
 }
 ```
 
-Istotne jest, że od momentu rozpoznania komunikatu w warstwie sieciowej posługujemy się danymi zdefiniowanymi jako encje, wraz z przypisanymi do nich rekordami mapami rekordów i repozytoriów. 
+Istotne jest, że od momentu rozpoznania komunikatu w warstwie sieciowej posługujemy się danymi zdefiniowanymi, co najmniej, jako encje. 
 
 ### Klasy obsługującej wejścia.
 
 W klasie bazowej należy umieścić wszystkie metody pozwalające analizować bufor.
 
 ```c++
+// Przedstawione są główne najistotniejsze składowe klasy.
 // Klasa posiadająca wszystkie mechanizmy pozwalającej jej analizować bufor
 // wejściowy sformatowany zgodnie z protokołem.
 class in::Input {
@@ -180,18 +180,17 @@ public:
     
     virtual bool parse() = 0;
     
-protected: // metody
-    // Poglądowo, metody których istnienia w takiej klasie można się spodziewać 
+protected:
+    // Poglądowo, metody których istnienia w takiej klasie można się spodziewać. 
     int getInt(); 
     double getDouble();
     std::string getString();
     
-protected: // atrybuty
+protected:
     std::size_t cursor; // Aktualne położenie znaku czytania kolejnej zmiennej. 
-                        // Każda metoda getXxx() ustawia rozpoczyna odczyt z 
-                        // pozycji na którą wskazuje cursor. Po zakończeniu 
-                        // odczytu metoda ustawia kursor na następną pozycję po 
-                        // miejscu na którym zakończyła odczyt.
+                        // Każda metoda getXxx() rozpoczyna odczyt z pozycji na którą
+    					// wskazuje cursor. Po zakończeniu odczytu metoda ustawia
+    					// kursor na następną pozycję po miejscu na którym zakończyła 						  // odczyt.
     const net::Buffer buffer; // dane wejściowe,
 }
 ```
@@ -199,6 +198,7 @@ protected: // atrybuty
 Mając klasę bazową parsującą wejście dziedziczymy po niej specjalizowaną klasę obsługującą konkretny komunikat:
 
 ```c++
+// Przedstawione są główne najistotniejsze składowe klasy.
 class in::GetFaktura : public in::Input {
 public:	
     GetFaktura(net::Buffer buffer)
@@ -223,7 +223,7 @@ public:
     data::entity::Faktura getFaktura() {
         return faktura;
     }
-private: // atrybuty
+private:
     data::entity::Faktura faktura;    
 }
 ```
@@ -233,6 +233,7 @@ private: // atrybuty
 W klasie bazowej należy umieścić wszystkie metody pozwalające złożyć bufor.
 
 ```c++
+// Przedstawione są główne najistotniejsze składowe klasy.
 // Klasa posiada wszystkie metody pozwalające umieścić wartość wszystkich typów
 class out::Output {
 public:
@@ -297,6 +298,7 @@ public:
 ```C++
 namespace act {
 
+// Przedstawione są główne najistotniejsze składowe klasy.
 class GetFaktura : public Action {
 public:
     GetFaktura(data::entity::Faktura filtr, data::repo::Faktura repoFaktury)
@@ -333,10 +335,10 @@ private: // atrybuty
 Wyżej zdefiniowane elementy wykonywane są na poziomie sieci. Klasa odbierająca i wysyłająca dane komunikuje się z klasami kontrolerów sygnalizując im odebrane komendy.  Sposoby takiej komunikacji będą zależały od wykorzystanego rozwiązania.  W przykładzie wyżej zasugerowane jest, że w jakiś sposób zostanie wysłany sygnał. Więc zostając w tej konwencji bez wskazywania gdzie wystąpi miejsce zestawienia takiego połączenia należy przyjąć że metody kontrolera zostały połączone do sygnału z stt::Siec.
 
 ```c++
+// Przedstawione są główne najistotniejsze składowe klasy.
 class ctrl::Ksiegowosc {
 public:
     // ...
-    
     // Żądanie zwrócenia informacji o fakturze o której część informacji
     // zawarta jest w encji faktura. 
     // Dla uproszczenia przyjęto, że w repozytorium nie ma możliwości znalezienia 
