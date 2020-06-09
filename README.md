@@ -24,7 +24,7 @@ Kod dzielony jest na  **akcje**, **kontrolery**, **stany**, **algorytmy**, **dan
 
 **Wejścia**, **wyjścia**, **kontrolery**, **stany** wymieniają się **danymi**. Wszystkie **dane** nawet o najprostszej strukturze zdefiniowane są jako osobna klasa (encja). 
 
-**Stan**, obiekt przechowujący informacje dostępny dla wszystkich innych obiektów aplikacji. 
+**Stan**, obiekt przechowujący informacje, dostępny dla wszystkich innych obiektów aplikacji. 
 
 Wejścia i wyjścia wyznaczają brzegi aplikacji. Praca na brzegu aplikacji oznacza przetwarzanie danych otrzymanych z wejście. 
 
