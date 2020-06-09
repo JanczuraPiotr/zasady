@@ -14,11 +14,19 @@ Architektura aplikacji rzutowana jest na strukturę katalogów przechowujących 
 
 Kod dzielony jest na  **akcje**, **kontrolery**, **stany**, **algorytmy**, **dane**, **repozytoria**.
 
-**Akcje** wykonują główne zadania aplikacji. **Akcja** pozostawia po sobie ślad w postaci zmiany **stanu** aplikacji i/lub zapisu **danych** w **repozytorium**. **Kontrolery** obsługują operacje wejścia wyjścia za pomocą **akcji**.  Analizę danych wejściowych wykonują **wejścia**. Przygotowanie danych wyjściowych wykonują **wyjścia**. **Zdarzenia** głównie czynności wykonywane przez operatora na interfejsie ale też przez np upływ czasu.
+**Kontrolery** obsługują sygnały za pomocą **akcji**.
 
-**Wejścia**, **wyjścia**, **kontrolery**, **stany** wymieniają się **danymi**. Wszystkie **dane** nawet o najprostszej strukturze zdefiniowane są jako osobna klasa. 
+**Akcje** wykonują główne zadania aplikacji. **Akcja** pozostawia po sobie ślad w postaci zmiany **stanu** aplikacji i/lub zapisu **danych** w **repozytorium**.   
+
+**Wejścia** analizują dane wejściowe zwracając obiekt z przestrzeni data:: . 
+
+**Wyjścia** wykonują konwersję obiektu przestrzeni data:: do formatu wymaganego przez przez kanał wyjściowy przez który zostaną wysłane dane.
+
+**Wejścia**, **wyjścia**, **kontrolery**, **stany** wymieniają się **danymi**. Wszystkie **dane** nawet o najprostszej strukturze zdefiniowane są jako osobna klasa (encja). 
 
 **Stan**, obiekt przechowujący informacje dostępny dla wszystkich innych obiektów aplikacji. 
+
+Wejścia i wyjścia wyznaczają brzegi aplikacji. Praca na brzegu aplikacji oznacza przetwarzanie danych otrzymanych z wejście. 
 
 ### Akcja
 
@@ -26,42 +34,42 @@ Kod dzielony jest na  **akcje**, **kontrolery**, **stany**, **algorytmy**, **dan
 
 Obiekt uruchamiany na potrzeby konkretnego zadnia. Raczej zawsze będzie tworzony przez metodę kontrolera. Akcje opisują funkcjonalność aplikacji z perspektywy klienta. Wszystko co można wykonać na aplikacji jako jej klient musi być opisane klasą umieszczoną na liście akcji. Lista akcji dla czytelnika jest podstawowym dokumentem o możliwościach aplikacji (jest definicją aplikacji).
 
-Dostęp do stanów, danych i algorytmów i repo.
+Dostęp do stanów, danych i algorytmów.
 
 ### Kontroler
 
 ``namespace ctrl``
 
-Obsługuje sygnały od interfejsów graficznych z klawiatury i od obiektów przechowujących stan o swoich zmianach , oraz wejść. Sygnały - zdarzenia wewnątrz interfejsów graficznych nie są wyszczególniane. Obsługa polega na wywołaniu właściwej akcji i w zależności od jej wyniku przekazaniu danych do wyjścia lub wywołaniu kolejnej akcji.
+Obsługuje sygnały od interfejsów graficznych z klawiatury i od obiektów przechowujących stan, oraz wejść. Sygnały - zdarzenia wewnątrz interfejsów graficznych nie są wyszczególniane. Obsługa polega na wywołaniu właściwej akcji i w zależności od jej wyniku przekazaniu danych do wyjścia lub wywołaniu kolejnej akcji. Akcje tworzone są na podstawie danych przekazanych w parametrach metody oraz stanów.
 
-Dostęp do akcji, wejść, wyjść i danych. 
+Dostęp do akcji, stanów, wejść, wyjść i danych. 
 
 ### Stan
 ``namespace stt`` 
 
-Obiekt trwający przez cały czas życia aplikacji. Na podstawie własnych mechanizmów i wywołujących je akcji modyfikują przechowywane przez siebie zmienne. Prawdopodobnie będzie posiadał uruchomiony wątek. Prawdopodobnie zmiany w obrębie atrybutów będą opisane algorytmem i będzie modyfikował repozytoria. Obiekty klas tej przestrzeni generują sygnały o zmianie stanu. 
+Obiekt trwający przez cały czas życia aplikacji. Na podstawie własnych mechanizmów i wywołujących je akcji modyfikują przechowywane przez siebie zmienne. Prawdopodobnie będzie posiadał uruchomiony wątek. Prawdopodobnie zmiany w obrębie atrybutów będą opisane algorytmem i będzie modyfikował repozytoria. Obiekty klas tej przestrzeni generują sygnały o zmianie stanu.
+Definicją przez przykład można napisać że obiekty utworzony jest w funkcji main() i tam uruchomiony a referencja do niego przekazywana jest wszystkim zainteresowanym obiektom.
 
-Dostęp do danych i algorytmów. Stany jako jedyne mają dostęp do interfejsów sprzętowych, portów sieciowych, USB.  
+Dostęp do danych i algorytmów. 
 
 ### Algorytm
 ``namespace alg``
 
-Prosta funkcja (może klasa) przetwarzająca, modyfikująca, licząca.
+Prosta funkcja (może klasa) przetwarzająca, modyfikująca, licząca. 
 
-Dostęp do danych.
+Dostęp do danych bez możliwości zapisu.
 
 ### Dane
 ``namespace data``
 
 Złożone typy danych wykorzystywane przez porty, zdarzenia, akcje i algorytmy.
 Przechowuje w bazie danych pozwala wyszukiwać i modyfikować.
-Proste typu danych np: ```typedef int Kwota``` tworzone w pliku przeznaczonym na definicje, w ciele innych klas a w razie konieczności umieszczane w domenowej przestrzeni nazw.
 
-``namespace data::entity`` Encja. Może istnieć w nie kompletnej formie i stanowić podstawę do filtrowania.
+``namespace data::entity`` Encja. Może istnieć w niekompletnej formie i stanowić podstawę do filtrowania.
 
-``namespace data::record`` Encja przechowywana na dysku, wyposażona w identyfikator
+``namespace data::record`` Encja przechowywana na dysku.
 
-``namespace data::map`` Zestawienia. Produkt zwracany  z repo
+``namespace data::map`` Zestawienia. Typ zwracany z repo jako wynik wyszukiwania.
 
 ``namespace data::repo`` Przechowywanie rekordy zapisane na podstawie encji po uprzednim walidowaniu. 
 
@@ -82,7 +90,7 @@ Zakładam ogólny typ dla danych wejściowych i wyjściowych w warstwie transpor
 
 ``namespace in``
 
-Analiza danych wejściowych. Sprawdzenie ich poprawności pod względem bezpieczeństwa aplikacji oraz zgodnością z wykonywanym zadaniem.
+Wejście w sensie miejsca, w którym dane dostają się do aplikacji. Analiza danych wejściowych. Sprawdzenie ich poprawności pod względem bezpieczeństwa aplikacji oraz zgodnością z wykonywanym zadaniem. 
 
 ### Wyjście
 ``namespace out``
@@ -91,29 +99,29 @@ Przygotowuje dane do wysłania na zewnątrz aplikacji.
 
 ### Zależności między elementami.
 
-Elementy współpracujące w celu wykonania nazwanego zadanie posługują się tą samą nazwą. Odróżnia je namespace z którego pochodzą. Założę że w przykładzie obsługujemy akcję obsługującą żądanie podania faktury.
+Elementy współpracujące w celu wykonania nazwanego zadanie posługują się tą samą nazwą. Odróżnia je namespace z którego pochodzą. Założenie, w przykładzie obsługujemy akcję obsługującą żądanie podania faktury.
 
 Główną składową cyklu obsługi jest ``act::GetFaktura``. Ona jest wyposażona we wszystkie dane i mechanizmu do wykonania zadania. Zwrócenia wyniku lub informacji o błędzie. ``act::GetFaktura`` inicjowana jest obiektem ``data::entity::Faktura``. Wynikiem jest pracy jest encja lub mapa encji czyli ``data::entity::Faktura`` lub ``data::map::Faktura``. Będzie to zależało od założeń projektowych.
 
-Jeżeli ``act::GetFaktura`` nie będzie wywoływana na brzegu aplikacji to dane ją inicjującą mogą pochodzić od innej akcji a on sama może być producentem danych dla innej akcji. Wywołanie akcji nie na brzegach aplikacji powinno być rzadkością. Można je tworzyć w celu widocznego wyodrębnienia istotnej operacji. Dobrym rozwiązaniem może być umieszczanie kodu wykonywanego przez okna dialogowe w akcjach.
+Jeżeli ``act::GetFaktura`` nie będzie wywoływana na brzegu aplikacji to dane ją inicjujące mogą pochodzić od innej akcji a on sama może być producentem danych dla innej akcji. Wywołanie akcji nie na brzegach aplikacji powinno być rzadkością. Akcje tego typu można tworzyć w celu widocznego wyodrębnienia istotnej operacji. Dobrym rozwiązaniem może być umieszczanie kodu wykonywanego przez okna dialogowe w akcjach.
 
 Wszystkie elementy wymieniają się danymi zdefiniowanymi w przestrzeni ``data``.
 
 Akcja jest wykonywana na podstawie ``data::entity::Faktura``. Gdy jest na skraju aplikacji obiekt tej zmiennej musi być utworzony z danych wejściowych. Najprawdopodobniej będzie to ``in::GetFaktura input(net::Buffer data);`` zwracająca ``data::entity::Faktura faktura = input.data();`` Zakładając, że ``act::GetFaktura`` znalazła większość ilość faktur: ``data::map::Faktura faktura = act::GetFaktura.faktury()`` . 
 
-Jeżeli wynik pracy akcji przewidziany jest do przekazania kolejnej akcji umieszczamy go jako parametr konstruktora : ``act::PrintFaktura printFaktura(faktura)``. Jeżeli wynik pracy ma być przekazany poza aplikację należy przetworzyć ją do postaci obsługiwanej przez kanał transmisyjny. Zakładam że będzie to ``net::Buffer`` : ``out::GetFaktura getFaktura(faktura)``  ``getFaktura.parse()`` a następnie: ``jakaśMetodaWykonującaWysyłkę(getFaktura.buffer())``
+Jeżeli wynik pracy akcji przewidziany jest do przekazania kolejnej akcji w celu wydrukowania, umieszczamy go jako parametr konstruktora np : ``act::PrintFaktura printFaktura(faktura)``. Jeżeli wynik pracy ma być przekazany poza aplikację należy przetworzyć ją do postaci obsługiwanej przez kanał transmisyjny. Zakładam że będzie to ``net::Buffer`` : ``out::GetFaktura getFaktura(faktura)``  ``getFaktura.parse()`` a następnie: ``jakaśMetodaWykonującaWysyłkę(getFaktura.buffer())``
 
 
 ## Więcej szczegółów  
 
-Czyli podejście utworzenia nowej funkcjonalności, którą jest zwrócenie faktury.
+Czyli podejście utworzenia nowej funkcjonalności, którą jest zwrócenie faktury. Uwaga na pseudokod.
 
 ### Komunikacja
 
 Zakładam, że ``stt::Siec``  potrafi skompletować bufor wejściowy i wyciągnąć z niego kod komendy.
 
 ```C++
-// Główne składowe klasy.
+// Przedstawione są główne najistotniejszse składowe klasy.
 // Klasa po odebraniu kompletnego bufora sprawdzi jego poprawność i komendę z jaką
 // jest związany a następnie wyemituje sygnał o właściwej nazwie.
 class stt::Siec {
@@ -153,7 +161,6 @@ private:
         }
     }
 }
-
 ```
 
 Istotne jest, że od momentu rozpoznania komunikatu w warstwie sieciowej posługujemy się danymi zdefiniowanymi jako encje, wraz z przypisanymi do nich rekordami mapami rekordów i repozytoriów. 
@@ -168,7 +175,8 @@ W klasie bazowej należy umieścić wszystkie metody pozwalające analizować bu
 class in::Input {
 public:
     Input(net::Buffer buffer) 
-        : cursor(0), buffer(buffer) {};
+        : cursor(0), buffer(buffer) 
+        {};
     
     virtual bool parse() = 0;
     
@@ -194,7 +202,8 @@ Mając klasę bazową parsującą wejście dziedziczymy po niej specjalizowaną 
 class in::GetFaktura : public in::Input {
 public:	
     GetFaktura(net::Buffer buffer)
-        : Input(buffer);
+        : Input(buffer) 
+        {};
     
     bool parse() override {
         bool result = true;
@@ -214,9 +223,6 @@ public:
     data::entity::Faktura getFaktura() {
         return faktura;
     }
-   
-private : //metody
-    
 private: // atrybuty
     data::entity::Faktura faktura;    
 }
@@ -230,7 +236,9 @@ W klasie bazowej należy umieścić wszystkie metody pozwalające złożyć bufo
 // Klasa posiada wszystkie metody pozwalające umieścić wartość wszystkich typów
 class out::Output {
 public:
-    Output() : cursor(0) , buffer() {};
+    Output() 
+        : cursor(0) , buffer() 
+        {};
     
     virtual bool serialize() = 0;
     
@@ -272,18 +280,18 @@ private:
 }
 ```
 
-### Akcja
+### Akcje 
 
 Akcja zależy od skomplikowania zadania które ma wykonać więc trudno narzucać (proponować) formę. Najważniejsze : w konstruktorze umieszczamy wszystkie zależności dla wykonania akcji.  Metoda Action::action() wykonuje wszystkie operacje i zwraca bool informujący o powodzeniu. Musi istnieć metoda zwracająca odpowiedź w postaci obiektu klasy z namespace data::.
 
 ```C++
 namespace act {
-// W założeniu klasy akcje udostępniają jedną metodę.
+    
+// Minimalny interfejs dla wszystkich klas akcji.
 class Action {
 public:
     virtual bool action() = 0;     
 }
-
 }
 ```
 ```C++
@@ -313,8 +321,8 @@ public:
 
 private: // atrybuty
     const data::entity::Faktura filtr;
-    data::record::Faktury faktura;
-    data::repo::Faktury repoFaktury;
+    data::record::Faktura faktura;
+    data::repo::Faktura repoFaktury;
 }
 
 }
