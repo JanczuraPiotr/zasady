@@ -362,5 +362,102 @@ public:
 }
 ```
 
+# Dane
 
+## Encja
+
+```c++
+namespace data::entity {
+
+class Entity {
+
+}
+
+class Osoba final: public Entity {
+public:
+    Osoba(const std::string &imie, const std::string &nazwisko, const std::string &pesel)
+        : Entity()
+        , imie_(imie)
+        , nazwisko_(nazwisko)
+        , pesel_(pesel)
+    {}; 
+
+    std::string imie() {
+        return imie_;
+    }
+    std::string nazwisko() {
+        return nazwisko_;
+    }
+    std::string pesel() {
+        return pesel_;
+    }
+
+private:
+    std::string imie_;
+    std::string nazwisko_;
+    std::string pesel_;
+}
+
+}
+```
+
+## Rekord
+
+```c++
+namespace data::record {
+typedef unsigned long AutoId;
+
+class Record {
+public:
+
+    AutoId id() { 
+        return id_;
+    }
+
+private:
+    AutoId id_;
+}
+
+class Osoba final : public Record {
+public:
+    
+    std::string imie() {
+        return entity_.imie();
+    }
+    std::string nazwisko() {
+        return entity_.nazwisko();
+    }
+    std::string pesel() {
+        return entity_.pesel();
+    }
+
+private:
+    data::entity::Osoba entity_;
+} 
+
+}
+```
+
+## Mapa
+
+Kolekcja rekordów gdzie map.first jest identyfikatorem rekordu w repozytorium a map.second jest rekordem.
+
+```c++
+namespace data::map {
+
+class Collection {
+
+}
+
+class Osoba : public  Collection {
+
+}
+
+} 
+```
+
+## Repozytorium 
+```c++
+
+```
 
