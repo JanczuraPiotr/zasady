@@ -189,9 +189,9 @@ protected:
 protected:
     std::size_t cursor; // Aktualne położenie znaku czytania kolejnej zmiennej. 
                         // Każda metoda getXxx() rozpoczyna odczyt z pozycji na którą
-                        // wskazuje cursor. Po zakończeniu odczytu metoda ustawia
-                        // kursor na następną pozycję po miejscu na którym zakończyła 
-                        // odczyt.
+    					// wskazuje cursor. Po zakończeniu odczytu metoda ustawia
+    					// kursor na następną pozycję po miejscu na którym zakończyła 
+    					// odczyt.
     const net::Buffer buffer; // dane wejściowe,
 }
 ```
