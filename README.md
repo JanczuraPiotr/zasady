@@ -106,12 +106,11 @@ namespace data {
 Od tej pory we wszystkich wystąpieniach zmiennych przechowujących ciśnienie i temperaturę:
 
 ```c++
-namespace data {
 //...
 data::Pressure pressure = 0;
 data::Temperature temperature = 0;
 //...
-}
+
 
 namespace data::entity {
 class State {
