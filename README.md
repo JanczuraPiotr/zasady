@@ -84,6 +84,84 @@ Poprawność encji kontrolowana jest w repo podczas tworzenia rekordu. Samodziel
 
 Wejścia mogą otrzymywać dane w formie, która dopiero po przeanalizowaniu pozwoli określić typ danej. Prawdopodobnie będzie nim bufor lub strumień danych. Wyjścia będą otrzymywać jako parametr typ zdefiniowany w ``data``. 
 
+Bezpośrednio w przestrzeni ``data`` definiujemy typy proste pomagające opisywać zmienne związane z domeną aplikacji. Na przykład aplikacja wykonuje pomiary temperatury i ciśnienia. Zakładając, że czujniki są szesnastobitowe i ciśnienie przyjmuje tylko wartości dodatnie a temperatura dodatnie i ujemne czyli :
+
+```c++
+unsigned short pressure;
+short temperature;
+```
+
+to definiujemy nowy typ o nazwie wskazującej domenowe znaczenie typu podstawowego:
+
+```c++
+namespace data {
+    // ...
+    // W komentarzu umieszczamy informcje o definiowanym typie.
+    typedef unsigned short Pressure; 
+    typedef short Temperature;
+    // ...
+}
+```
+
+Od tej pory we wszystkich wystąpieniach zmiennych przechowujących ciśnienie i temperaturę:
+
+```c++
+namespace data {
+//...
+data::Pressure pressure = 0;
+data::Temperature temperature = 0;
+//...
+}
+
+namespace data::entity {
+class State {
+public:
+    State(data::Pressure pressure, data::Temperature temperature)
+        : pressure_(pressure)
+        , temperature_(temperature)
+    {}
+    data::Pressure pressure() {
+        return pressure_;
+    }
+    data::Temperature temperature() {
+        return temperature_;
+    }
+private:
+	data::Pressure pressure_;
+    data::Temperature temperature_;
+}
+
+}
+
+data::entity::State state(data::Pressure pressure, data::Temperature temperature) {
+    return data::entity::State(pressure, temperature);
+}
+
+```
+
+Analogicznie postępujemy z typami złożonymi.
+
+Przykładowa definicja bufora przechowującej pomiary w jednostce czasu:
+
+```C++
+std::map<unsigned long, std::pair<unsigned short, short>> pomiary;
+```
+
+Według wcześniejszych założeń ma wyglądać tak:
+
+```c++
+namespace data {
+    //...
+    typedef unsigned long Milliseconds;
+    typedef unsigned short Pressure;
+    typedef short Temperature;
+    typedef map<Milliseconds, std::pair<Pressure, Temperature>> Measurement;
+    //...
+}
+```
+
+
+
 Zakładam ogólny typ dla danych wejściowych i wyjściowych w warstwie transportowej (sieciowej):
 
   ```c++
