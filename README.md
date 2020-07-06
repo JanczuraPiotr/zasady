@@ -12,6 +12,8 @@ Przestrzenie nazw małymi literami.
 
 Definicje typów dużymi literami.
 
+Przestrzenie nazw małymi literami.  Przy korzystaniu z klas głęboko zagnieżdżonych w przestrzeni stosujemy aliasy dla takiej namespace. Nigdy nie "wyjmujemy" klasy z namespace.
+
 
 ## Architektura
 
@@ -76,9 +78,64 @@ Przechowuje w bazie danych pozwala wyszukiwać i modyfikować.
 
 ``namespace data::record`` Encja przechowywana na dysku.
 
-``namespace data::map`` Zestawienia. Typ zwracany z repo jako wynik wyszukiwania.
+``namespace data::col`` Zbiór encji albo rekordów i operacje na nich.
 
 ``namespace data::repo`` Przechowywanie rekordy zapisane na podstawie encji po uprzednim walidowaniu. 
+
+Encje i rekordy definiują w ciele klasy typ zbioru odpowiedni dla tej encji lub rekordu, które są podstawą, wokół której tworzone są kolekcje. 
+``data::entity::Encja::vector; // Zbiory tej encji przechowywane są w wektorach``
+``data::record::Encja::map;    // Zbiory tych rekordów przechowywane są w mapach``
+Definiując kontenery podpowiadamy w jaki sposób ich klasy są wykorzystywane w aplikacji.
+```c++
+namespace data::entity {
+
+class Encja {
+public:
+    typedef std::map<Encja>queue;                    // W zależności od potrzeb obiekty 
+    typedef std::multimap<DateTime, Encja> multimap; // mogą być grupowane wg różnych
+                                                     // kryteriów i na każdą okoliczność
+                                                     // definiujemy kontener
+private:
+    DateTime kiedy;
+    String co;
+}
+
+} // namespace data::entity
+
+namespace data::record {
+
+class Record {
+public:
+    typedef std::map<AutoId, Encja>map; // Kluczem mapy przechowującej listę rekordów
+                                        // zawsze jest id z tabeli w bazie.
+private:
+    AutoId id;
+    Encja encja;
+}
+
+} // namespace data::record
+
+namespace data::col {
+
+// Ze względu na długi namespace, w tym miejscu można utworzyć alias:
+namespace e = data::entity;
+namespace r = data::record;
+    
+class Collection {
+public:
+
+    // Operacje na zbiorach
+
+private:
+    r::Encja::map encje;
+    // albo w zależności od potrzeb:
+    // e::Encja::queue encje;
+    // e::Encja::multimap encje;
+}
+
+} // namespace data::col
+
+```
 
 Poprawność encji kontrolowana jest w repo podczas tworzenia rekordu. Samodzielnie może być stosowana jako parametr filtrów albo lista parametrów. Encja nie musi być zapisana w bazie. Szczegóły na ten temat w zasadach posługiwania się zbiorami danych. 
 
