@@ -4,7 +4,8 @@
 
 * Domena aplikacji - główne zagadnienie do obsługi którego utworzono aplikację    
 * Encja - zestaw atrybutów wspólnie opisujących złożony obiekt. Atrybuty są typów prostych.
-* Rekord - Encja zapisana na dysku rozszerzona o unikalny identyfikator czasami o daty utworzenia i ostatniej modyfikacji rekordu.  
+* Rekord - Encja zapisana na dysku rozszerzona o unikalny identyfikator czasami o daty utworzenia i ostatniej modyfikacji rekordu. 
+* d-type - Redefinicja typu, głównie wbudowanego lub z biblioteki standardowej, w celu nadania mu nazwy precyzyjniej określającej aktualne przeznaczenie typu.
 
 ## Nazewnictwo
 
