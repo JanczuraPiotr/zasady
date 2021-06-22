@@ -5,7 +5,8 @@
 * Domena aplikacji - główne zagadnienie do obsługi którego utworzono aplikację    
 * Encja - zestaw atrybutów wspólnie opisujących złożony obiekt. Atrybuty są typów prostych.
 * Rekord - Encja zapisana na dysku rozszerzona o unikalny identyfikator czasami o daty utworzenia i ostatniej modyfikacji rekordu. 
-* d-type - Typ domenowy. Redefinicja typu, głównie wbudowanego lub z biblioteki standardowej, w celu nadania mu nazwy precyzyjniej określającej aktualne przeznaczenie typu.
+* d-type - Typ domenowy. Redefinicją typu, głównie wbudowanego lub z biblioteki standardowej, w celu nadania mu nazwy precyzyjniej określającej aktualne przeznaczenie typu.
+* Brzeg aplikacji - Miejsce w którym zmienne zawierają wartości, które nie mogły być wcześniej skontrolowane. 
 
 ## Nazewnictwo
 
@@ -83,10 +84,11 @@ Przechowuje w bazie danych pozwala wyszukiwać i modyfikować.
 
 ``namespace data::repo`` Przechowywanie rekordy zapisane na podstawie encji po uprzednim walidowaniu. 
 
-Encje i rekordy definiują w ciele klasy typ zbioru odpowiedni dla tej encji lub rekordu, które są podstawą, wokół której tworzone są kolekcje. 
+Encje i rekordy definiują w ciele klasy typ zbioru odpowiedni dla tej encji lub rekordu, na podstawie którego tworzone są kolekcje. 
 ``data::entity::Encja::vector; // Zbiory tej encji przechowywane są w wektorach``
 ``data::record::Encja::map;    // Zbiory tych rekordów przechowywane są w mapach``
 Definiując kontenery podpowiadamy w jaki sposób ich klasy są wykorzystywane w aplikacji.
+
 ```c++
 namespace data::entity {
 
@@ -241,11 +243,11 @@ Przygotowuje dane do wysłania na zewnątrz aplikacji.
 
 ### Zależności między elementami.
 
-Elementy współpracujące w celu wykonania nazwanego zadanie posługują się tą samą nazwą. Odróżnia je namespace z którego pochodzą. Założenie, w przykładzie obsługujemy akcję obsługującą żądanie podania faktury.
+Elementy współpracujące w celu wykonania zadania posługują się tą samą nazwą lub w nazwie występuje podobny człon. Odróżnia je namespace z którego pochodzą. W przykładzie obsługujemy akcję przesłania faktury.
 
-Główną składową cyklu obsługi jest ``act::GetFaktura``. Ona jest wyposażona we wszystkie dane i mechanizmu do wykonania zadania. Zwrócenia wyniku lub informacji o błędzie. ``act::GetFaktura`` inicjowana jest obiektem ``data::entity::Faktura``. Wynikiem jest pracy jest encja lub mapa encji czyli ``data::entity::Faktura`` lub ``data::map::Faktura``. Będzie to zależało od założeń projektowych.
+Główną składową cyklu obsługi jest ``act::GetFaktura``. Jest wyposażona we wszystkie dane i mechanizmy do wykonania zadania. Zwrócenia wyniku lub informacji o błędzie. ``act::GetFaktura`` inicjowana jest obiektem ``data::entity::Faktura``. Wynikiem pracy jest mapa encji czyli ``data::entity::Faktura`` lub ``data::map::Faktura``.
 
-Jeżeli ``act::GetFaktura`` nie będzie wywoływana na brzegu aplikacji to dane ją inicjujące mogą pochodzić od innej akcji a on sama może być producentem danych dla innej akcji. Wywołanie akcji nie na brzegach aplikacji powinno być rzadkością. Akcje tego typu można tworzyć w celu widocznego wyodrębnienia istotnej operacji. Dobrym rozwiązaniem może być umieszczanie kodu wykonywanego przez okna dialogowe w akcjach.
+Jeżeli ``act::GetFaktura`` nie będzie wywoływana na brzegu aplikacji to dane ją inicjujące mogą pochodzić od innej akcji a ona sama może być producentem danych dla kolejnej akcji. 
 
 Wszystkie elementy wymieniają się danymi zdefiniowanymi w przestrzeni ``data``.
 
@@ -270,6 +272,7 @@ class stt::Siec {
 public:
     // ...
     // Sygnał jaki wyemituje ta klasa po rozpoznaniu komendy o kodzie GET_FAKTURA
+    // Zakładam użycie zewnętrznej biblioteki obsługującej sygnały (boost, qt)
     void getFakturaRequest(model::entity::Faktura faktura); // <- sygnał
     // Metoda do której przekazujemy fakturę którą chcemy wysłać klientowi.
     void getFakturaResponse(model::entity::Faktura faktura) {// <- slot
@@ -317,7 +320,10 @@ W klasie bazowej należy umieścić wszystkie metody pozwalające analizować bu
 class in::Input {
 public:
     Input(net::Buffer buffer) 
-        : cursor(0), buffer(buffer) 
+        : cursor(0), buffer(buffer), id(0), odbiorca(""), value("") 
+        {};
+    Input(str::string id, std::string odbiorca, std::string value) 
+        : cursor(0), buffer({}),id(id), odbiorca(odbiorce) ,value(value) 
         {};
     
     virtual bool parse() = 0;
@@ -335,13 +341,16 @@ protected:
                         // kursor na następną pozycję po miejscu na którym zakończyła 
                         // odczyt.
     const net::Buffer buffer; // dane wejściowe,
+    str::string id;
+    std::string odbiorca; 
+    std::string value;
 }
 ```
 
 Mając klasę bazową parsującą wejście dziedziczymy po niej specjalizowaną klasę obsługującą konkretny komunikat:
 
 ```c++
-// Przedstawione są główne najistotniejsze składowe klasy.
+// Przedstawione są główne, najistotniejsze składowe klasy.
 class in::GetFaktura : public in::Input {
 public:	
     GetFaktura(net::Buffer buffer)
@@ -352,7 +361,7 @@ public:
         bool result = true;
         // W rzeczywistym kodzie, gdzieś po drodze jest prowadzona kontrola			
         // poprawności by ustawić result na false w razie niepowodzenia. 
-        // Może to być prze wyjątek rzucony w dowolnym momencie.
+        // Może to być przez wyjątek rzucony w dowolnym momencie.
         try {
             faktura.setId(getInt());
             faktura.setOdbiorca(getString());
@@ -381,7 +390,7 @@ W klasie bazowej należy umieścić wszystkie metody pozwalające złożyć bufo
 class out::Output {
 public:
     Output() 
-        : cursor(0) , buffer() 
+    	: cursor(0), buffer() 
         {};
     
     virtual bool serialize() = 0;
@@ -436,6 +445,7 @@ class Action {
 public:
     virtual bool action() = 0;     
 }
+
 }
 ```
 ```C++
@@ -475,20 +485,33 @@ private: // atrybuty
 
 ### Kontroler.
 
-Wyżej zdefiniowane elementy wykonywane są na poziomie sieci. Klasa odbierająca i wysyłająca dane komunikuje się z klasami kontrolerów sygnalizując im odebrane komendy.  Sposoby takiej komunikacji będą zależały od wykorzystanego rozwiązania.  W przykładzie wyżej zasugerowane jest, że w jakiś sposób zostanie wysłany sygnał. Więc zostając w tej konwencji bez wskazywania gdzie wystąpi miejsce zestawienia takiego połączenia należy przyjąć że metody kontrolera zostały połączone do sygnału z stt::Siec.
+Kontroler leży na brzegu aplikacji.
+Miejsce odpowiadające za interakcje z użytkownikiem. Rozumiem przez to wprowadzenie przez niego danych za pośrednictwem konsoli, kontrolek GUI, nadesłania połączeniem sieciowym, portem komunikacyjnym.
+
+Wyżej zdefiniowane elementy wykonywane są na poziomie sieci. Klasa odbierająca i wysyłająca dane komunikuje się z klasami kontrolerów sygnalizując im odebrane komendy.  Sposoby takiej komunikacji będą zależały od wykorzystanego rozwiązania. W przykładzie wyżej zasugerowane jest, że w jakiś sposób zostanie wysłany sygnał. Więc zostając w tej konwencji bez wskazywania gdzie wystąpi miejsce zestawienia takiego połączenia należy przyjąć że metody kontrolera zostały połączone do sygnału z stt::Siec.
 
 ```c++
-// Przedstawione są główne najistotniejsze składowe klasy.
-class ctrl::Ksiegowosc {
+// Przykładowy kontroler obsługujący komunikację za pośrednictwem gui.
+class ctrl::Gui {
 public:
     // ...
     // Żądanie zwrócenia informacji o fakturze o której część informacji
     // zawarta jest w encji faktura. 
     // Dla uproszczenia przyjęto, że w repozytorium nie ma możliwości znalezienia 
     // większej ilości faktur pasujących do wzorca podanego w parametrze filtr
-    void getFaktura(data::entity::Faktura filtr) {
-        data::repo::Faktura repoFaktura;
-        act::GetFaktura getFaktura(filtr, repoFaktura);
+    void getFaktura(net::Buffer inputBuffer) {
+        // Uwaga! jesteśmy na skraju aplikacji.
+        in::GetFaktura input(inputBuffer);  
+        if (!input.parse()) {
+            throw BadInput();   // Jakiś wyjątek na tą okazję.
+                                // Dane mogą nie stanowić poprawnej struktury dla 
+                                // reszty funkcji. Mogą być spreparowane w sposób
+                                // zagrażający pracy całej aplikacji.
+        }
+        // Zmienna która posłuży za filtr podczas poszukiwania faktury w repo.
+        data::entity::Faktura fakturaFiltr = input.getFaktura();
+        act::GetFaktura getFaktura(fakturaFiltr);
+
         if(getFaktura.action()) {
             // Odpowiedzią na wyszukiwanie zawsze jest mapa.
             data::entity::Faktura faktura = getFaktura.getFakturaEntity();
@@ -496,12 +519,13 @@ public:
         } else {
             // Nie udało się wykonać zadania.
             // Od kontekstu będzie zależało czy nie powodzeniem jest nie znalezienie 
-            // faktury czy problem z wykonaniem czynności 
+            // faktury czy problem z wykonaniem czynności.
             sygnał : brakFaktury(filtr);
         }		
     }   
     // ...
 }
+
 ```
 
 
