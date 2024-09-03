@@ -14,17 +14,17 @@
 
   * zawierają wartości, które nie mogły być wcześniej skontrolowane (wejście).
 
-  * przechowują ostateczną wartość, która zostaje w przekazana poza aplikację (wyjście).
+  * przechowują ostateczną wartość, która zostaje przekazana poza aplikację (wyjście).
 
-    Sterowanie aplikacją jest formą przekazywania zmiennych na jej brzeg. 
+    Sterowanie aplikacją jest formą przekazywania zmiennych na jej brzeg 
 
 ## Nazewnictwo
 
-Przestrzenie nazw małymi literami.
+Przestrzenie nazw piszemy małymi literami.
 
-Definicje typów dużymi literami.
+Definicje typów piszemy dużymi literami.
 
-Przestrzenie nazw małymi literami.  Przy korzystaniu z klas głęboko zagnieżdżonych w przestrzeni stosujemy aliasy dla takiej namespace. Nigdy nie "wyjmujemy" klasy z namespace.
+Przy korzystaniu z klas głęboko zagnieżdżonych w przestrzeni stosujemy aliasy. Nigdy nie "wyjmujemy" klasy z namespace.
 
 
 ## Architektura
