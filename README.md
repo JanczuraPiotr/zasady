@@ -10,6 +10,14 @@
 
 * d-type - Typ domenowy. Redefinicja typu, głównie wbudowanego lub z biblioteki standardowej, w celu nadania mu nazwy precyzyjniej określającej aktualne przeznaczenie typu.
 
+* Brzeg aplikacji - Miejsce w którym zmienne:
+
+    * zawierają wartości, które nie mogły być wcześniej skontrolowane (wejście).
+
+    * przechowują ostateczną wartość, która zostaje przekazana poza aplikację (wyjście).
+
+      Sterowanie aplikacją jest formą przekazywania zmiennych na jej brzeg
+
 ## Nazewnictwo
 
 Przestrzenie nazw piszemy małymi literami.
