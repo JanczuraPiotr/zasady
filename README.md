@@ -24,8 +24,6 @@ Przestrzenie nazw piszemy małymi literami.
 
 Definicje typów piszemy dużymi literami.
 
-Przestrzenie nazw piszemy małymi literami.
-
 
 ## Architektura
 
